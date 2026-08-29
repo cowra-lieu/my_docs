@@ -5,8 +5,11 @@ import mathjax3 from 'markdown-it-mathjax3'
 
 export default withSidebar(
     defineConfig({
-        title: "我的知识库",
+        title: "我的备忘录",
         description: "优雅的 Markdown 自动化文档",
+        // 如果你的 GitHub Pages 网址是 https://<username>.github.io/<repo>/，请解除下一行的注释并填写仓库名
+        // base: '/<repo>/',
+        base: '/my_docs/',
 
         // 1. 开启全局的最后更新时间计算功能（基于 Git 提交记录）
         lastUpdated: true,

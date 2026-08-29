@@ -1,8 +1,8 @@
 ---
 layout: home
 hero:
-  name: "我的心情库"
-  text: "各种记不住的东西"
+  name: "我的备忘录"
+  text: "忘得太快，时不时拿出来翻翻"
   tagline: "记录心情，沉淀生活"
   actions:
     - theme: brand
@@ -15,10 +15,10 @@ hero:
 <!-- 1. 正常调用组件 -->
 <VPTeamMembers :members="[
 {
-avatar: '/avatar.png',
+avatar: './images/avatar.png',
 name: '小大大',
-title: '全栈开发工程师 / 文档作者',
-desc: '热爱技术分享，追求极致代码优雅。',
+title: '顺其自然 / 好好活着',
+desc: '各种东西，越来越记不住。',
 links: [
 { icon: 'github', link: 'https://github.com' }
 ]
