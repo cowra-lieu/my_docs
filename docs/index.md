@@ -15,7 +15,7 @@ hero:
 <!-- 1. 正常调用组件 -->
 <VPTeamMembers :members="[
 {
-avatar: './images/avatar.png',
+avatar: 'avatar.png',
 name: '小大大',
 title: '顺其自然 / 好好活着',
 desc: '各种东西，越来越记不住。',
