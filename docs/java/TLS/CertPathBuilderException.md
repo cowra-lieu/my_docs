@@ -1,7 +1,9 @@
+# unable to find valid certification path
+
+## 为什么System.getProperty("javax.net.ssl.trustStore")返回 null？
 System.getProperty("javax.net.ssl.trustStore") 返回 null 是完全正常的，
 这并不代表 JVM 没有加载 <jave.home>/lib/security/cacerts。
 
-## 为什么返回 null？
 在 Java 中，-Djavax.net.ssl.trustStore 是一个可选的覆盖属性：
 - 默认机制： 如果启动参数中没有显式指定 -Djavax.net.ssl.trustStore=/path/to/truststore，
 JVM 会默默加载默认路径（即 <java.home>/lib/security/cacerts），但不会主动向系统属性 System.getProperty("javax.net.ssl.trustStore") 中写入这个默认路径。因此直接 getProperty 拿到的是 null。
@@ -14,6 +16,12 @@ JVM 会默默加载默认路径（即 <java.home>/lib/security/cacerts），但�
 ```java 
 System.out.println("实际运行使用的 JAVA_HOME: " + System.getProperty("java.home"));
 // 对应的 cacerts 完整路径为: System.getProperty("java.home") + "/lib/security/cacerts"
+```
+
+> 在命令行中，-D 参数必须放在 Main 类名或 -jar 参数之前。如果放错位置，JVM 会将其作为字符串数组传递给 main(String[] args)，而不会解析为系统属性。
+```java
+# -D 必须紧跟 java 命令，放在 -jar 或主类之前
+java -Djavax.net.ssl.trustStore=/path/to/cacerts -jar myapp.jar
 ```
 
 ## 开启 JVM 级别的 SSL 调试日志（最推荐）
@@ -119,3 +127,23 @@ public class TrustStoreChecker {
     }
 }
 ```
+
+## 为什么只加“根证书”仍会报 CertPathBuilderException？
+即使你确实将根证书存入了 JRE 的 cacerts，以下常见原因依然会导致 Apache HttpClient 找不到证书路径：
+
+1. 缺少中间证书（Intermediate CA）：
+   - 现代 SSL 证书大多是 根证书 -> 中间证书 -> 服务器证书 三级结构。
+   - 如果服务端配置不规范，在 TLS 握手中只返回了“服务器证书”，没有带上“中间证书”，而你的信任库里又只有“根证书”，Java PKIX 校验器就无法补全整个信任链（Path），从而报 unable to find valid certification path。
+   - 解决办法： 将目标网站的 中间证书（Intermediate Certificate） 一并导入信任库，或者直接导入服务端证书。
+
+2. 系统属性被改写：
+   - 检查代码或 Agent 中是否有类似 System.setProperty("javax.net.ssl.trustStore", ...) 的操作。
+
+3. Apache HttpClient 显式指定了独立的 SSLContext：
+   - 在代码中，Apache HttpClient 如果被配置了自定义的 TrustStrategy 或手动加载了某个 KeyStore 文件，它就会绕过 JDK 默认的 jre/lib/security/cacerts 文件。
+```java 
+// 如果代码里这样写，它只会信任 custom.keystore，根本不会读 JRE 的 cacerts
+SSLContext sslContext = SSLContexts.custom()
+.loadTrustMaterial(new File("custom.keystore"), "password".toCharArray())
+.build();
+   ```
